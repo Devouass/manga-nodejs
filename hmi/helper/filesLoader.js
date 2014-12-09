@@ -1,6 +1,23 @@
 var filesLoader = (function() {
 
-	var _floaders = {};
+	var Status = {
+        SUCCESS: 'success',
+        ERROR: 'error',
+        ABORT: 'abort',
+        NOCONTENT: 'nocontent',
+        TIMEOUT: 'timeout'
+    }
+
+	var Methods = {
+        PUT: 'PUT',
+        GET: 'GET',
+        POST: 'POST',
+        DELETE: 'DELETE'
+    }
+
+	var _floaders = {
+		STATUS: Status
+	};
 
 	var _getScript = function(url, callback, context) {
 
@@ -72,21 +89,10 @@ var filesLoader = (function() {
 
 
        
-        /*static Status = {
-            SUCCESS: 'success',
-            ERROR: 'error',
-            ABORT: 'abort',
-            NOCONTENT: 'nocontent',
-            TIMEOUT: 'timeout'
-        }
+        /*static 
 
         
-        static Methods = {
-            PUT: 'PUT',
-            GET: 'GET',
-            POST: 'POST',
-            DELETE: 'DELETE'
-        }
+        static 
 
 
         static States = {
