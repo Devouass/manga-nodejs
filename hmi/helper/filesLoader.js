@@ -55,6 +55,7 @@ var filesLoader = (function() {
 
 	_load = function(path) {
 		console.log("load "+path);
+		alert(path);
 	}
 
 	_floaders.load = _load;

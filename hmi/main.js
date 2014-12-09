@@ -1,53 +1,42 @@
-(function(window, jquery, knockout) {
+(function(window, $, ko) {
 
-	var isLoaded = ko.observable(false);
+	$(document).ready(function(){
+		var isLoaded = ko.observable(false);
+
+		var fLoader = filesLoader;
+
+		function AppViewModel() {
+
+			var self = this;
+			this.isReady = ko.observable(false);
+
+		    this.fromTome = ko.observable("");
+		    this.toTome = ko.observable("");   
+
+		    this.launchUpload = function() {
+		    	/*if(self.fromTome() != "" && self.toTome() != ""){
+		    		console.log('send request');
+		    	} else {
+		    		alert('please fill all field');
+		    	}*/
+		    	fLoader.load('/toto');
+		    };
+
+		    this.isReady(true);
+		}
+
+		var viewModel = new AppViewModel();
+		$( "#applicationContainer" ).load("/hmi/content.html", function() {
+			isLoaded(true);
+		});
+
+		var isLoadedComputed = ko.computed(function() {
+			return isLoaded() && viewModel.isReady();
+		});
+
+		isLoadedComputed.subscribe(function(b){
+			ko.applyBindings(viewModel, document.getElementById('appContent'));
+		});
+	});
 	
-	$( "#applicationContainer" ).load("/hmi/content.html", function() {
-		isLoaded(true);
-	});
-
-	function AppViewModel() {
-
-		this.isReady = ko.observable(false);
-		this.ue = false;
-
-		this.numberOfClicks = ko.observable(0);
-        this.incrementClickCounter = function() {
-            var previousCount = this.numberOfClicks();
-            this.numberOfClicks(previousCount + 1);
-        }
-
-	    this.fromTome = ko.observable("");
-	    this.toTome = ko.observable("");
-
-	    var self = this;
-
-	    this.uploadEnable = ko.computed(function(){
-	    	return self.fromTome() != "" && self.toTome() != "";
-	    });
-	    this.uploadEnable.subscribe(function(b) {
-	    	self.ue = b;
-	    })
-
-
-	    this.launchUpload = function() {
-	    	if(this.ue){
-	    		console.log('send request');
-	    	} else {
-	    		alert('please fill all field');
-	    	}
-	    };
-
-	    this.isReady(true);
-	}
-
-	var viewModel = new AppViewModel(); 
-
-	var isLoadedComputed = ko.computed(function() {
-		return isLoaded() && viewModel.isReady();
-	});
-
-	isLoadedComputed.subscribe(function(b){
-		ko.applyBindings(viewModel, document.getElementById('appContent'));
-	});
 })(window, $, ko);
