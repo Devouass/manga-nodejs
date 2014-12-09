@@ -11,15 +11,22 @@
 			this.isReady = ko.observable(false);
 
 		    this.fromTome = ko.observable("");
-		    this.toTome = ko.observable("");   
+		    this.toTome = ko.observable("");
+
+		    this.launchUploadEnable = ko.observable(true);
 
 		    this.launchUpload = function() {
-		    	/*if(self.fromTome() != "" && self.toTome() != ""){
-		    		console.log('send request');
-		    	} else {
-		    		alert('please fill all field');
-		    	}*/
-		    	fLoader.load('/toto');
+		    	$.ajax({
+					type: "POST",
+					url: '/',
+					data: {
+						startTom: 1,
+						endTom: 2
+					},
+					success: function(res, status) {
+						console.log(res);
+					},
+				});
 		    };
 
 		    this.isReady(true);

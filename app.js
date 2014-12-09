@@ -3,6 +3,7 @@ var fs = require('fs'),
     url = require('url'),
     route = require('./helper/routes'),
     filesLoader = require('./helper/filesLoader'),
+    fileWriter = require('./helper/fileWriter'),
     server;
 
 var PORT = 8090;
@@ -17,13 +18,17 @@ function _get(request, response){
     } else if(path.indexOf('/vendor') == 0 || path.indexOf('/hmi') == 0){
         filesLoader.getFile(path, response);
     } else {
-        response.writeHead(200, {"Content-Type": "text/html"});
-        response.end('good');
+        response.writeHead(404, {"Content-Type": "text/html"});
+        response.end('Not Found');
     }
 }
 
 function _post(request, response){
-
+    console.log('on post method');
+    fileWriter.getManga(function() {
+        response.writeHead(200, {"Content-Type": "application/json"});
+        response.end(JSON.stringify({time: 'now', result:'success'}));
+    });
 }
 
 function _put(request, response){
