@@ -4,7 +4,8 @@ var fs = require('fs'),
     route = require('./helper/routes'),
     filesLoader = require('./helper/filesLoader'),
     fileWriter = require('./helper/fileWriter'),
-    server;
+    server,
+    querystring = require('querystring');
 
 var PORT = 8090;
 
@@ -23,11 +24,42 @@ function _get(request, response){
     }
 }
 
+var callbackGetManga = function(result) {
+    console.log(result);
+}
+
+function processPost(request, response, callback) {
+    var queryData = "";
+    if(typeof callback !== 'function') return null;
+
+    if(request.method == 'POST') {
+        request.on('data', function(data) {
+            queryData += data;
+            if(queryData.length > 1e6) {
+                queryData = "";
+                response.writeHead(413, {'Content-Type': 'text/plain'}).end();
+                request.connection.destroy();
+            }
+        });
+
+        request.on('end', function() {
+            //request.post = querystring.parse(queryData);
+            callback(querystring.parse(queryData));
+        });
+
+    } else {
+        response.writeHead(405, {'Content-Type': 'text/plain'});
+        response.end();
+    }
+}
+
 function _post(request, response){
-    console.log('on post method');
-    fileWriter.getManga(function() {
-        response.writeHead(200, {"Content-Type": "application/json"});
-        response.end(JSON.stringify({time: 'now', result:'success'}));
+    processPost(request, response, function(values){
+        var start = values.startTom;
+        var stop = values.endTom;
+        fileWriter.getManga(start,stop,callbackGetManga);
+        response.writeHead(204, {"Content-Type": "application/json"});
+        response.end(JSON.stringify({result:'success'}));
     });
 }
 

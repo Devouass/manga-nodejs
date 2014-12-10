@@ -19,13 +19,14 @@
 		    	$.ajax({
 					type: "POST",
 					url: '/',
+					contentType: 'application/json;charset=utf-8',
 					data: {
-						startTom: 1,
-						endTom: 2
+						startTom: "1",
+						endTom: "2"
 					},
 					success: function(res, status) {
-						console.log(status);
-						console.log(res);
+						console.log("status" + status);
+						console.log("result" + res);
 					},
 				});
 		    };
