@@ -24,6 +24,7 @@
 						endTom: 2
 					},
 					success: function(res, status) {
+						console.log(status);
 						console.log(res);
 					},
 				});

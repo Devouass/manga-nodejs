@@ -14,12 +14,45 @@ var _getPath = function(tom, number) {
 	return pathInit + tom + '/' + n + JPG;
 }
 
+var download = function(options, fileName, callback) {
+	if(!options || !fileName || !fileName instanceof String){
+		callback({});
+	}
+
+	var file = fs.createWriteStream(fileName);
+	var returnStatus = {
+		status: "success",
+		error:"",
+		manga : {
+			chapter: "",
+			img: ""
+		}
+	};
+
+	var req = http.get(options, function (res) {
+		
+		res.pipe(file);
+		file.on('finish', function () {
+            file.close(t); // close() is async, call callback after close completes.
+        });
+        file.on('error', function (err) {
+            fs.unlink(fileName); // Delete the file async. (But we don't check the result)
+            if (t)
+                t(err.message);
+        });
+	    res.on('data', function(data) {
+	  	});
+	 	res.on('end', function() {
+	 		callback();
+	  	});
+	}).on('error', function (e) {
+		console.log('error ' + e.message);
+		callback()
+	});
+}
+
 var getManga = function(callback) {
 	var path = _getPath(769,1);
-
-	var t = function(message) {
-		console.log(message);
-	}
 
 	console.log('path is '+path);
 
@@ -29,36 +62,16 @@ var getManga = function(callback) {
 		path : path
 	};
 
-	var file = fs.createWriteStream('test.jpg');
 
-	var req = http.get(options, function (res) {
 
-		var img = '';
-		res.pipe(file);
-		file.on('finish', function () {
-            file.close(t); // close() is async, call callback after close completes.
-        });
-        file.on('error', function (err) {
-            fs.unlink('test.jpg'); // Delete the file async. (But we don't check the result)
-            if (t)
-                t(err.message);
-        });
-
-	    res.on('data', function(data) {
-	    	console.log('receiving data');
-	    	img += data;
-	  	});
-	 	res.on('end', function() {
-	 		console.log('finish');
-	 		callback();
-	  	});
-	}).on('error', function (e) {
-		console.log(e.message);
-	});
-	req.setTimeout(12000, function () {
+	
+	/*req.setTimeout(12000, function () {
 		console.log("time out");
-        request.abort();
-    });
+		var t = (new Date()).getTime() - initTime;
+		console.log("time out thrown in " + t)
+        req.abort();
+        callback();
+    });*/
 
 
     /*function download(url, dest, callback) {
