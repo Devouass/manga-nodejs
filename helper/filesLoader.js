@@ -7,11 +7,17 @@ var sendError = function(response){
 
 var getFile = function(path, response) {
 	var filesPath = __dirname +'/..' + path;
+
+	var contentType = "text/html";
+	if(path.indexOf("html") == -1){
+		contentType = "application/javascript"
+	}
+
 	if(!fs.existsSync(filesPath)){
 		sendError(response);
 	}
 	fs.readFile(filesPath, 'utf-8', function(error, content) {
-        response.writeHead(200, {"Content-Type": "application/javascript"});
+        response.writeHead(200, {"Content-Type": contentType});
         response.end(content);
     });
 }

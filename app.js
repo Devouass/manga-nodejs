@@ -44,7 +44,7 @@ function processPost(request, response, callback) {
 
         request.on('end', function() {
             //request.post = querystring.parse(queryData);
-            callback(querystring.parse(queryData));
+            callback(queryData);
         });
 
     } else {
@@ -57,14 +57,17 @@ function _post(request, response){
     processPost(request, response, function(values){
         var start = values.startTom;
         var stop = values.endTom;
-        fileWriter.getManga(start,stop,callbackGetManga);
-        response.writeHead(204, {"Content-Type": "application/json"});
+        console.log(values);
+        //fileWriter.getManga(start,stop,callbackGetManga);
+        response.writeHead(200, {"Content-Type": "application/json"});
         response.end(JSON.stringify({result:'success'}));
     });
 }
 
 function _put(request, response){
-
+    console.log('in put method');
+    response.writeHead(204);
+    response.end();
 }
 
 function _delete(request, response){
