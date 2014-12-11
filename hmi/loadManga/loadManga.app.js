@@ -1,14 +1,48 @@
 var loadMangaApp = (function(){
 
 	var _query = myApp.query;
-
-
+	var sockjs_url = '/manga_sockjs';
+	
 	function ViewModel() {
 		var self = this;
 
-	    this.fromTome = ko.observable("");
-	    this.toTome = ko.observable("");
-	    this.launchUploadEnable = ko.observable(false);
+		var id = 0;
+		function manga() {
+			_self = this;
+			this.id;
+			this.chapter = "";
+			this.page = "";
+			this.status = "";
+
+			this.fromJson = function(json){
+				_self.chapter = json.chapter || "";
+				_self.page = json.page || "";
+				_self.status = json.status || "";
+			}
+		}
+		this.mangas = ko.observableArray([]);
+
+		var sockjs = new SockJS(sockjs_url);
+		sockjs.onopen = function() {
+			console.log("open connection : "+sockjs.protocol)
+		};
+		sockjs.onmessage = function(e) {
+			console.log("receive message "+e.data);
+			var d = JSON.parse(e.data);
+			var m = new manga();
+			m.fromJson(d)
+			m.id = id;
+			id++;
+			self.mangas.push(m);
+			self.mangas.valueHasMutated();
+		};
+		sockjs.onclose = function() {
+			console.log("close connection")
+		};
+
+	    this.fromTome = ko.observable("1");
+	    this.toTome = ko.observable("1");
+	    this.launchUploadEnable = ko.observable(true);
 
 	    this.launchUploadEnableComputed = ko.computed(function(){
 	    	return self.fromTome() != "" && self.toTome() != "";
@@ -19,12 +53,9 @@ var loadMangaApp = (function(){
 
 	    this.launchUpload = function() {
 	    	var data = {};
-	    	data.startTom = self.fromTome();
-	    	data.toTome = self.toTome();
-	    	_query.post('/manga', data, function(result, status){
-	    		console.log("status " + status);
-				console.log("result " + result);
-	    	}, this, {});
+	    	data.first= self.fromTome();
+	    	data.last = self.toTome();
+	    	_query.post('/manga', data, function(result, status){}, this, {});
 	    };
 	} 
 

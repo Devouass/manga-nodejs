@@ -7,4 +7,14 @@
 	<input type="text" data-bind="value: toTome"></input>
 
 	<button data-bind="click: launchUpload, enable: launchUploadEnable">launch upload</button>
+
+	<div id="results">
+		<div data-bind="template: { name: 'manga-template', foreach: mangas }"></div>
+	</div>
+
+	<script type="text/html" id="manga-template">
+	    <p>Chapter: <span data-bind="text: chapter"></span></p>
+	    <p>Page   : <span data-bind="text: page"></span></p>
+	    <p>Status : <span data-bind="text: status"></span></p>
+	</script>
 </div>

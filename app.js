@@ -4,10 +4,36 @@ var fs = require('fs'),
     route = require('./helper/routes'),
     filesLoader = require('./helper/filesLoader'),
     fileWriter = require('./helper/fileWriter'),
-    server,
-    querystring = require('querystring');
+    querystring = require('querystring'),
+    sockjs = require('sockjs');
 
+var server;
 var PORT = 8090;
+
+
+//sockjs stuff
+var sockServeur = sockjs.createServer();
+var sockClients = {};
+
+function broadcast(message) {
+    for (var i in sockClients) {
+        sockClients[i].write(JSON.stringify(message));
+    }
+}
+
+sockServeur.on('connection', function(conn) {
+    console.log("new connection : "+conn.id);
+    sockClients[conn.id] = conn;
+
+    conn.on('data', function(message) {
+        console.log('message received... '+message);
+    })
+
+    conn.on('close', function() {
+        console.log("connection.close");
+        delete sockClients[conn.id];
+    })
+})
 
 function _get(request, response){
     var path = url.parse(request.url).pathname + "";
@@ -19,13 +45,9 @@ function _get(request, response){
     } else if(path.indexOf('/vendor') == 0 || path.indexOf('/hmi') == 0){
         filesLoader.getFile(path, response);
     } else {
-        response.writeHead(404, {"Content-Type": "text/html"});
+        response.writeHead(404);
         response.end('Not Found');
     }
-}
-
-var callbackGetManga = function(result) {
-    console.log(result);
 }
 
 function isInt(value) {
@@ -59,6 +81,7 @@ function processPost(request, response, callback) {
 
 function sendError(response, message) {
     response.writeHead(400);
+    if(message){console.log("error : " + message)}
     response.end(message || "error");
 }
 
@@ -67,18 +90,20 @@ function _post(request, response){
 
         var path = url.parse(request.url).pathname + "";
         if(path.indexOf('/manga') == 0){
-            console.log(values)
-            console.log(values.startTom)
-            console.log(values.toTome)
-            if(!isInt(values.startTom) || !isInt(values.toTome)){
+            var init = values.first;
+            var end = values.last;
+            if(!isInt(init) || !isInt(end)){
                 sendError(response, "invalid parameters");
             } else {
-                //fileWriter.getManga(values.startTom, values.endTom, callbackGetManga);
-                response.writeHead(200, {"Content-Type": "application/json"});
-                response.end(JSON.stringify({result:'success'}));
+                fileWriter.getManga(init, end, broadcast);
+                //response.writeHead(200, {"Content-Type": "application/json"});
+                //response.end(/*JSON.stringify({result:'success'})*/);
+                response.writeHead(200);
+                response.end();
             }
-        }
-        sendError(response, "bad request");
+        } else {
+            sendError(response, "bad request");
+        } 
     });
 }
 
@@ -109,6 +134,9 @@ function entryPoint(request, response) {
     }
 }
 
+
+
 server = http.createServer(entryPoint);
+sockServeur.installHandlers(server, {prefix:'/manga_sockjs'});
 server.listen(PORT);
 console.log("starting serveur on port " + PORT);
