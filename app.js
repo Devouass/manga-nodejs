@@ -28,6 +28,10 @@ var callbackGetManga = function(result) {
     console.log(result);
 }
 
+function isInt(value) {
+  return !isNaN(value) && (function(x) { return (x | 0) === x; })(parseFloat(value))
+}
+
 function processPost(request, response, callback) {
     var queryData = "";
     if(typeof callback !== 'function') return null;
@@ -44,7 +48,7 @@ function processPost(request, response, callback) {
 
         request.on('end', function() {
             //request.post = querystring.parse(queryData);
-            callback(queryData);
+            callback(JSON.parse(queryData));
         });
 
     } else {
@@ -53,19 +57,32 @@ function processPost(request, response, callback) {
     }
 }
 
+function sendError(response, message) {
+    response.writeHead(400);
+    response.end(message || "error");
+}
+
 function _post(request, response){
     processPost(request, response, function(values){
-        var start = values.startTom;
-        var stop = values.endTom;
-        console.log(values);
-        //fileWriter.getManga(start,stop,callbackGetManga);
-        response.writeHead(200, {"Content-Type": "application/json"});
-        response.end(JSON.stringify({result:'success'}));
+
+        var path = url.parse(request.url).pathname + "";
+        if(path.indexOf('/manga') == 0){
+            console.log(values)
+            console.log(values.startTom)
+            console.log(values.toTome)
+            if(!isInt(values.startTom) || !isInt(values.toTome)){
+                sendError(response, "invalid parameters");
+            } else {
+                //fileWriter.getManga(values.startTom, values.endTom, callbackGetManga);
+                response.writeHead(200, {"Content-Type": "application/json"});
+                response.end(JSON.stringify({result:'success'}));
+            }
+        }
+        sendError(response, "bad request");
     });
 }
 
 function _put(request, response){
-    console.log('in put method');
     response.writeHead(204);
     response.end();
 }
@@ -75,7 +92,6 @@ function _delete(request, response){
 }
 
 function entryPoint(request, response) {
-    
     switch(route.getMethod(request)) {
         case 'GET':
             _get(request, response);

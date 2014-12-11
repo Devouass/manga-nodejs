@@ -21,18 +21,16 @@ var loadMangaApp = (function(){
 	    	var data = {};
 	    	data.startTom = self.fromTome();
 	    	data.toTome = self.toTome();
-	    	_query.post('/', data, function(result, status){
+	    	_query.post('/manga', data, function(result, status){
 	    		console.log("status " + status);
 				console.log("result " + result);
 	    	}, this, {});
 	    };
 	} 
 
-	var viewModel;// = new ViewModel();
-
-	var isReady = ko.observable(false);
-
+	var viewModel;
 	var _content;
+	var isReady = ko.observable(false);
 
 	var _loadContent = function(callback) {
 
@@ -69,7 +67,8 @@ var loadMangaApp = (function(){
 	var _loadManga = {
 		isReady : isReady,
 		init: init,
-		show : show
+		show : show,
+		hide : hide
 	};
 
 	return _loadManga;
