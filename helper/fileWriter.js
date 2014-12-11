@@ -165,7 +165,7 @@ var getManga = function(start, end, broadcast) {
 	var endCallback = function(){
 		console.log('end download with status '+this.status);
 		eventEmitter.removeAllListeners('continue');
-		eventEmitter.removeAllListeners('wait');
+		eventEmitter.removeAllListeners('message');
 		console.log("all listener removed");
 	}
 
