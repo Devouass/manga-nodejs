@@ -5,5 +5,4 @@ getMethod = function(request) {
 var routes = {};
 routes.getMethod = getMethod;
 
-
 module.exports = routes;

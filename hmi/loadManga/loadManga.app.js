@@ -2,25 +2,35 @@ var loadMangaApp = (function(){
 
 	var _query = myApp.query;
 	var sockjs_url = '/manga_sockjs';
+
+
+	var id = 0;
+	function manga() {
+		_self = this;
+		this.id;
+		this.chapter = "";
+		this.page = "";
+
+		this.fromJson = function(json){
+			_self.chapter = json.chapter || "";
+			_self.page = json.page || "";
+		}
+	}
+
+	function resumeManga(number) {
+		this.number = number;
+	}
 	
 	function ViewModel() {
 		var self = this;
-
-		var id = 0;
-		function manga() {
-			_self = this;
-			this.id;
-			this.chapter = "";
-			this.page = "";
-			this.status = "";
-
-			this.fromJson = function(json){
-				_self.chapter = json.chapter || "";
-				_self.page = json.page || "";
-				_self.status = json.status || "";
-			}
-		}
-		this.mangas = ko.observableArray([]);
+		this.fromTome = ko.observable("767");
+	    this.toTome = ko.observable("768");
+	    this.toTomeEnable = ko.observable(true);
+	    this.theLatest = ko.observable(false);
+	    this.launchUploadEnable = ko.observable(true);
+	    this.isDownloadPending = ko.observable(false);
+	    this.mangas = ko.observableArray([]);
+	    this.resumeMangas = ko.observableArray([]);
 
 		var sockjs = new SockJS(sockjs_url);
 		sockjs.onopen = function() {
@@ -29,33 +39,70 @@ var loadMangaApp = (function(){
 		sockjs.onmessage = function(e) {
 			console.log("receive message "+e.data);
 			var d = JSON.parse(e.data);
-			var m = new manga();
-			m.fromJson(d)
-			m.id = id;
-			id++;
-			self.mangas.push(m);
-			self.mangas.valueHasMutated();
+			if(d.status == "download finish") {
+				console.log("download finish with success");
+				self.isDownloadPending(false);
+			}else if(d.status == "success"){
+				var m = new manga();
+				m.fromJson(d.manga)
+				m.id = id;
+				id++;
+				self.mangas.push(m);
+				self.mangas.valueHasMutated();
+			} else if(d.status == "finished"){
+				console.log("manga "+d.manga.chapter+" finished");
+				var m = new resumeManga(d.manga.chapter);
+				self.resumeMangas.push(m)
+				self.resumeMangas.valueHasMutated();
+			} else if(d.status == "pending"){
+				console.log("manga "+d.manga.chapter+"/"+d.manga.page+" pending");
+			} else if(d.status == "error"){
+				console.log("download finished with error !!!!");
+			} else {
+				console.log("status received unknown : "+d.status);
+			}
 		};
 		sockjs.onclose = function() {
 			console.log("close connection")
 		};
 
-	    this.fromTome = ko.observable("1");
-	    this.toTome = ko.observable("1");
-	    this.launchUploadEnable = ko.observable(true);
+		this.theLatest.subscribe(function(b){
+			self.toTomeEnable(!b);
+		});
 
 	    this.launchUploadEnableComputed = ko.computed(function(){
-	    	return self.fromTome() != "" && self.toTome() != "";
+	    	return self.fromTome() != "" && (self.toTome() != "" || self.theLatest()) && !self.isDownloadPending();
 	    })
 	    this.launchUploadEnableComputed.subscribe(function(b){
 	    	self.launchUploadEnable(b)
 	    })
 
+	    this.clearMangas = function() {
+	    	self.mangas([]);
+	    	self.mangas.valueHasMutated();
+	    	self.resumeMangas([]);
+	    	self.resumeMangas.valueHasMutated();
+	    }
+
 	    this.launchUpload = function() {
+	    	self.clearMangas();
 	    	var data = {};
 	    	data.first= self.fromTome();
-	    	data.last = self.toTome();
-	    	_query.post('/manga', data, function(result, status){}, this, {});
+	    	if(self.theLatest()){
+	    		data.last = "theLast";
+	    	} else {
+	    		data.last = self.toTome();
+	    	}
+	    	_query.post('/manga', data, function(result, status){
+	    		if(status == "success"){
+	    			console.log("starting download");
+	    			self.isDownloadPending(true);
+	    		} else {
+	    			console.log("error");
+	    			window.alert(result.responseText);
+	    		}
+	    		
+	    	}, this, {});
 	    };
 	} 
 

@@ -20,16 +20,26 @@ var download = function(options, fileName, context) {
 
 	var sockMessage = {
 		status : "",
-		page: context.page,
-		chapter: context.chapter
+		manga : {
+			page: context.page,
+			chapter: context.chapter
+		}
 	}
 
-	if(true){
+	if(false){
 		sockMessage.status = "success"
 		eventEmitter.emit("message", sockMessage)
- 		if(context.page == "03"){
+ 		if(context.page == "15" && (context.end == context.chapter || context.end == "theLast")){
  			console.log("download finish");
- 			context.callback.call({status: "success", message: "download success"});
+ 			context.downloadFinishCallback("success");
+ 		} else if (context.page == "15") {
+ 			var nextChapter = parseInt(context.chapter);
+ 			nextChapter++;
+ 			context.chapter =  nextChapter + "";
+ 			context.page = "0";
+ 			sockMessage.status = "finished"
+ 			eventEmitter.emit("message", sockMessage)
+ 			eventEmitter.emit("continue", context);
  		} else {
  			setTimeout(function(){
  				console.log("next page")
@@ -37,7 +47,7 @@ var download = function(options, fileName, context) {
  				nextPage++;
  				context.page =  nextPage + "";
  				eventEmitter.emit("continue", context);
- 			}, 3000);
+ 			}, 500);
  		}
  		return;
 	}
@@ -45,7 +55,7 @@ var download = function(options, fileName, context) {
 
 	if(!options || !fileName || !fileName instanceof String){
 		console.log('wrong parameters');
-		context.callback.call({status: "error", message: "invalidParameters"});
+		context.downloadFinishCallback("error")
 	}
 
 	var file = fs.createWriteStream(fileName);
@@ -54,15 +64,25 @@ var download = function(options, fileName, context) {
 	var req = http.get(options, function (res) {
 		
 		if(res.statusCode === 404){
-			console.log("file not found");
-			fs.unlinkSync(fileName);
-			console.log("next chapter");
- 			var nextChapter = parseInt(context.chapter);
- 			nextChapter++;
- 			context.chapter =  nextChapter + "";
- 			sockMessage.status = "not found"
- 			eventEmitter.emit("message", sockMessage)
- 			eventEmitter.emit("continue", context);
+
+			if(context.page == "00"){
+				console.log("download finish, no more chapter to download");
+	 			context.downloadFinishCallback("success");
+			} else if(context.end != "theLast" && context.end == context.chapter){
+	 			console.log("download finish, chapter "+context.end+" downloaded");
+	 			context.downloadFinishCallback("success");
+	 		} else {
+	 			console.log("file not found");
+				fs.unlinkSync(fileName);
+				console.log("next chapter");
+	 			var nextChapter = parseInt(context.chapter);
+	 			nextChapter++;
+	 			context.chapter =  nextChapter + "";
+	 			context.page = "0";
+	 			sockMessage.status = "finished"
+	 			eventEmitter.emit("message", sockMessage)
+	 			eventEmitter.emit("continue", context);
+	 		}
 		} else {
 			res.pipe(file);
 			file.on('finish', function () {
@@ -70,31 +90,31 @@ var download = function(options, fileName, context) {
 	        });
 	        file.on('error', function (err) {
 	            fs.unlinkSync(fileName); // Delete the file async. (But we don't check the result)
-	            console.log('error on files');
-				context.callback.call({status: "error", message: err});
+	            console.log('error on files' + err);
+				context.downloadFinishCallback("error");
 	        });
 		}
+
+		res.on('close', function() {
+			console.log("res close")
+		})
 
 		
 	    /*res.on('data', function(data) {
 	  	});*/
 	 	res.on('end', function() {
+	 		//never called when 404 received...
 	 		sockMessage.status = "success"
  			eventEmitter.emit("message", sockMessage)
-	 		if(context.page == "03"){
-	 			console.log("download finish");
-	 			context.callback.call({status: "success", message: "download success"});
-	 		} else {
-	 			console.log("next page")
-	 			var nextPage = parseInt(context.page);
-	 			nextPage++;
-	 			context.page =  nextPage + "";
-	 			eventEmitter.emit("continue", context);
-	 		}
+ 			console.log("next page")
+ 			var nextPage = parseInt(context.page);
+ 			nextPage++;
+ 			context.page =  nextPage + "";
+ 			eventEmitter.emit("continue", context);
 	  	});
 	}).on('error', function (e) {
 		console.log('request error' + e.message);
-		context.callback.call({status: "error", message: e.message});
+		context.downloadFinishCallback("error");
 	});
 
 	req.setTimeout(20000, function() {
@@ -102,7 +122,7 @@ var download = function(options, fileName, context) {
 		req.end();
 		console.log('waiting 30s before continue');
 		sockMessage.status = "pending";
-		eventEmitter.emit("message", context.sockMessage);
+		eventEmitter.emit("message", sockMessage);
 		setTimeout(function(){
 			console.log("let's try again");
 			eventEmitter.emit("continue", context);
@@ -146,7 +166,7 @@ var getManga = function(start, end, broadcast) {
 		if(n < 10){
 			n = '0' +n;
 		}
-		result.page = n;
+		result.page = n + "";
 
 		var url = getURL(result.chapter, result.page);
 		result.options.path = url + "";
@@ -158,15 +178,24 @@ var getManga = function(start, end, broadcast) {
 	eventEmitter.on('continue', privateCallback);
 
 	eventEmitter.on('message', function(param){
-		console.log("sending sock message");
 		sockCallBack(param);
 	})
 
-	var endCallback = function(){
-		console.log('end download with status '+this.status);
+	var endCallback = function(status){
+		if(status == "error"){
+			console.log('end download with error');
+			eventEmitter.emit("message", {status: "error"})
+
+		} else if (status == "success"){
+			console.log('end download with success');
+			eventEmitter.emit("message", {status: "download finish"})
+		} else {
+			console.log("end download with unknown status : "+status);
+		}
+		console.log('removing all listeners')
 		eventEmitter.removeAllListeners('continue');
 		eventEmitter.removeAllListeners('message');
-		console.log("all listener removed");
+		console.log("all listeners removed");
 	}
 
 	//then launch for the first time
@@ -175,7 +204,7 @@ var getManga = function(start, end, broadcast) {
 		page: "0",
 		options: options,
 		end: end,
-		callback: endCallback
+		downloadFinishCallback: endCallback
 	};
 	privateCallback(param);
 	

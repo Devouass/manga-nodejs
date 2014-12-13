@@ -1,7 +1,6 @@
 var fs = require('fs'),
     http = require('http'),
     url = require('url'),
-    route = require('./helper/routes'),
     filesLoader = require('./helper/filesLoader'),
     fileWriter = require('./helper/fileWriter'),
     querystring = require('querystring'),
@@ -69,7 +68,6 @@ function processPost(request, response, callback) {
         });
 
         request.on('end', function() {
-            //request.post = querystring.parse(queryData);
             callback(JSON.parse(queryData));
         });
 
@@ -92,7 +90,7 @@ function _post(request, response){
         if(path.indexOf('/manga') == 0){
             var init = values.first;
             var end = values.last;
-            if(!isInt(init) || !isInt(end)){
+            if(!isInt(init) || (!isInt(end) && end != "theLast")){
                 sendError(response, "invalid parameters");
             } else {
                 fileWriter.getManga(init, end, broadcast);
@@ -116,8 +114,12 @@ function _delete(request, response){
 
 }
 
+function getMethod(request) {
+    return "" + request.method;
+}
+
 function entryPoint(request, response) {
-    switch(route.getMethod(request)) {
+    switch(getMethod(request)) {
         case 'GET':
             _get(request, response);
             break;
@@ -133,8 +135,6 @@ function entryPoint(request, response) {
         default:
     }
 }
-
-
 
 server = http.createServer(entryPoint);
 sockServeur.installHandlers(server, {prefix:'/manga_sockjs'});

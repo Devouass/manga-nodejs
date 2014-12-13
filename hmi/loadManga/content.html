@@ -1,13 +1,22 @@
 <div id='appContent'>
 
-	<div>from tom</div>
+	<div>from chapter</div>
 	<input type="text" data-bind="value: fromTome"></input>
 
-	<div>to tom</div>
-	<input type="text" data-bind="value: toTome"></input>
+	<div>to chapter</div>
+	<input type="text" data-bind="value: toTome, enable: toTomeEnable"></input>
+	<div>to the latest</div>
+	<input type="checkbox" data-bind="checked: theLatest"></input>
 
 	<button data-bind="click: launchUpload, enable: launchUploadEnable">launch upload</button>
-
+	<button data-bind="click: clearMangas">clear Manga</button>
+	<!-- ko if:resumeMangas().length > 0 -->
+		<hr/>
+		<div id="resume">
+			<div data-bind="template: { name: 'resume-template', foreach: resumeMangas }"></div>
+		</div>
+		<hr/>
+	<!-- /ko -->
 	<div id="results">
 		<div data-bind="template: { name: 'manga-template', foreach: mangas }"></div>
 	</div>
@@ -16,7 +25,11 @@
 		<div style="width:100%">
 		    <div style="width:30%; display:inline-block">Chapter: <span data-bind="text: chapter"></span></div>
 		    <div style="width:30%; display:inline-block">Page   : <span data-bind="text: page"></span></div>
-		    <div style="width:30%; display:inline-block">Status : <span data-bind="text: status"></span></div>
+		</div>
+	</script>
+	<script type="text/html" id="resume-template">
+		<div style="width:100%">
+		    <div>Chapter: <span data-bind="text: number"></span></div>
 		</div>
 	</script>
 </div>
