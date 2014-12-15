@@ -47,7 +47,7 @@ var download = function(options, fileName, context) {
  				nextPage++;
  				context.page =  nextPage + "";
  				eventEmitter.emit("continue", context);
- 			}, 500);
+ 			}, 100);
  		}
  		return;
 	}

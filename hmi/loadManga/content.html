@@ -1,24 +1,27 @@
 <div id='appContent'>
+	
+	<div id="manga-configuration">
+		<div>from chapter</div>
+		<input type="text" data-bind="value: fromTome"></input>
 
-	<div>from chapter</div>
-	<input type="text" data-bind="value: fromTome"></input>
+		<div>to chapter</div>
+		<input type="text" data-bind="value: toTome, enable: toTomeEnable"></input>
+		<div>to the latest</div>
+		<input type="checkbox" data-bind="checked: theLatest"></input>
 
-	<div>to chapter</div>
-	<input type="text" data-bind="value: toTome, enable: toTomeEnable"></input>
-	<div>to the latest</div>
-	<input type="checkbox" data-bind="checked: theLatest"></input>
-
-	<button data-bind="click: launchUpload, enable: launchUploadEnable">launch upload</button>
-	<button data-bind="click: clearMangas">clear Manga</button>
-	<!-- ko if:resumeMangas().length > 0 -->
-		<hr/>
-		<div id="resume">
-			<div data-bind="template: { name: 'resume-template', foreach: resumeMangas }"></div>
+		<button data-bind="click: launchUpload, enable: launchUploadEnable">launch upload</button>
+		<button data-bind="click: clearMangas">clear Manga</button>
+	</div><!--
+	--><div id="download-results">
+		<!-- ko if:resumeMangas().length > 0 -->
+			<div id="resume">
+				<div data-bind="template: { name: 'resume-template', foreach: resumeMangas }"></div>
+			</div>
+			<hr/>
+		<!-- /ko -->
+		<div id="results">
+			<div data-bind="template: { name: 'manga-template', foreach: mangas }"></div>
 		</div>
-		<hr/>
-	<!-- /ko -->
-	<div id="results">
-		<div data-bind="template: { name: 'manga-template', foreach: mangas }"></div>
 	</div>
 
 	<script type="text/html" id="manga-template">

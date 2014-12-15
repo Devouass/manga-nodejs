@@ -1,0 +1,12 @@
+
+#manga-configuration {
+	display: inline-block;
+	width: 30%;
+	position: absolute;
+}
+
+#download-results {
+	display: inline-block;
+	margin-left: 30%;
+	width: 70%;
+}

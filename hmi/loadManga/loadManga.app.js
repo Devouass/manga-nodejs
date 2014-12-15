@@ -124,6 +124,17 @@ var loadMangaApp = (function(){
 			console.log(status)
 			console.log("fail")
 		}).always(function(data, status) {});
+		
+		var cssRef = '/hmi/loadManga/css/style.css';
+		
+		$.ajax({
+          url: cssRef,
+          cache: true
+    	}).done(function(data, status){
+    		if(status == 'success'){
+    			$('<link rel="stylesheet" type="text/css" href="'+cssRef+'" />').appendTo("head");
+    		}
+        }).always(function(data, status){});
 	}
 
 	var init = function() {
