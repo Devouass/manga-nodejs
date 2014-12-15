@@ -26,7 +26,7 @@ var download = function(options, fileName, context) {
 		}
 	}
 
-	if(false){
+	if(true){
 		sockMessage.status = "success"
 		eventEmitter.emit("message", sockMessage)
  		if(context.page == "15" && (context.end == context.chapter || context.end == "theLast")){
