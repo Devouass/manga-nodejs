@@ -21,7 +21,6 @@ function broadcast(message) {
 }
 
 sockServeur.on('connection', function(conn) {
-    console.log("new connection : "+conn.id);
     sockClients[conn.id] = conn;
 
     conn.on('data', function(message) {
@@ -29,7 +28,6 @@ sockServeur.on('connection', function(conn) {
     })
 
     conn.on('close', function() {
-        console.log("connection.close");
         delete sockClients[conn.id];
     })
 })
@@ -119,6 +117,8 @@ function getMethod(request) {
 }
 
 function entryPoint(request, response) {
+    //var path = url.parse(request.url).pathname + "";
+    //console.log(path);
     switch(getMethod(request)) {
         case 'GET':
             _get(request, response);

@@ -16,19 +16,24 @@ var getURL = function(tom, number) {
 	return pathInit + tom + '/' + n + JPG;
 }
 
+var fakeDownload = true;
+
 var download = function(options, fileName, context) {
 
 	var sockMessage = {
 		status : "",
 		manga : {
+			name : context.name || "One Piece",
 			page: context.page,
 			chapter: context.chapter
 		}
 	}
 
-	if(true){
-		sockMessage.status = "success"
-		eventEmitter.emit("message", sockMessage)
+	if(fakeDownload){
+		if(context.page == "00"){
+			sockMessage.status = "newManga";
+			eventEmitter.emit("message", sockMessage)
+		}
  		if(context.page == "15" && (context.end == context.chapter || context.end == "theLast")){
  			console.log("download finish");
  			context.downloadFinishCallback("success");
@@ -36,7 +41,7 @@ var download = function(options, fileName, context) {
  			var nextChapter = parseInt(context.chapter);
  			nextChapter++;
  			context.chapter =  nextChapter + "";
- 			context.page = "0";
+ 			context.page = "00";
  			sockMessage.status = "finished"
  			eventEmitter.emit("message", sockMessage)
  			eventEmitter.emit("continue", context);
@@ -132,6 +137,9 @@ var download = function(options, fileName, context) {
 
 var INITdir = "./downloads/OnePiece/";
 var getDirectory = function(chapter){
+	if(fakeDownload){
+		return INITdir + chapter + "/";
+	}
 	if(!fs.existsSync(INITdir)){
 		if(!fs.existsSync("./downloads")){
 			console.log("create initial directory");
@@ -157,8 +165,6 @@ var getManga = function(start, end, broadcast) {
 		port : 80
 	};
 
-	var sockCallBack = broadcast;
-
 	var privateCallback = function(result) {
 
 		//retrieve good number for page
@@ -177,8 +183,12 @@ var getManga = function(start, end, broadcast) {
 
 	eventEmitter.on('continue', privateCallback);
 
+	eventEmitter.on('new_chapter', function(param){
+		broadcast(param);
+	});
+
 	eventEmitter.on('message', function(param){
-		sockCallBack(param);
+		broadcast(param);
 	})
 
 	var endCallback = function(status){

@@ -19,7 +19,9 @@ var getContentType = function(path){
 	if(path.indexOf("gif") != -1){
 		contentType = "image/gif";
 	}
-	
+	if(path.indexOf(".tff") != -1){
+		contentType = "application/octet-stream";
+	}
 	return contentType;
 }
 

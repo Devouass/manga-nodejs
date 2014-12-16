@@ -13,26 +13,32 @@
 		<button data-bind="click: clearMangas">clear Manga</button>
 	</div><!--
 	--><div id="download-results">
-		<!-- ko if:resumeMangas().length > 0 -->
+		<!-- ko if:mangas().length > 0 -->
+			<!-- ko if:isDownloadPending -->
+				<div style="width 100%; margin:10px;"> Download running </div>
+			<!-- /ko -->
+			<!-- ko ifnot:isDownloadPending -->
+				<div style="width 100%; margin:10px;"> Download stopped </div>
+			<!-- /ko -->
 			<div id="resume">
-				<div data-bind="template: { name: 'resume-template', foreach: resumeMangas }"></div>
+				<div data-bind="template: { name: 'manga-template', foreach: mangas }"></div>
 			</div>
-			<hr/>
 		<!-- /ko -->
-		<div id="results">
-			<div data-bind="template: { name: 'manga-template', foreach: mangas }"></div>
-		</div>
 	</div>
 
 	<script type="text/html" id="manga-template">
-		<div style="width:100%">
-		    <div style="width:30%; display:inline-block">Chapter: <span data-bind="text: chapter"></span></div>
-		    <div style="width:30%; display:inline-block">Page   : <span data-bind="text: page"></span></div>
-		</div>
-	</script>
-	<script type="text/html" id="resume-template">
-		<div style="width:100%">
-		    <div>Chapter: <span data-bind="text: number"></span></div>
+		<div style="width:100%; height: 25px; vertical-align:middle;">
+			<div style="width:30%; display:inline-block">Name: <span data-bind="text: name"></span></div><!--
+		    --><div style="width:30%; display:inline-block">Chapter: <span data-bind="text: chapter"></span></div><!--
+		    --><div style="width:30%; display:inline-block">
+			    <!-- ko if: isPending -->
+			    	<img style="vertical-align: middle; width:20px; height: 20px" src="/hmi/loadManga/img/10.gif"/>
+			    	<!-- <div id="pending_gif"/> -->
+			    <!-- /ko -->
+			    <!-- ko ifnot: isPending -->
+			    	<div style="width:20px; height: 20px" class="icon-ok-circle"></div>
+			    <!-- /ko -->
+		    </div>
 		</div>
 	</script>
 </div>

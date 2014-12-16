@@ -6,23 +6,22 @@ var loadMangaApp = (function(){
 
 	var id = 0;
 	function manga() {
-		_self = this;
-		this.id;
-		this.chapter = "";
-		this.page = "";
+		var _self = this;
 
-		this.fromJson = function(json){
-			_self.chapter = json.chapter || "";
-			_self.page = json.page || "";
+		_self.id = "";
+		_self.name = "";
+		_self.chapter = "";
+		_self.isPending = ko.observable(false);
+
+		_self.fromJson = function(data){
+			_self.name = data.name || "One piece";
+			_self.chapter = data.chapter || "XX";
 		}
-	}
-
-	function resumeManga(number) {
-		this.number = number;
 	}
 	
 	function ViewModel() {
 		var self = this;
+
 		this.fromTome = ko.observable("767");
 	    this.toTome = ko.observable("768");
 	    this.toTomeEnable = ko.observable(true);
@@ -30,7 +29,9 @@ var loadMangaApp = (function(){
 	    this.launchUploadEnable = ko.observable(true);
 	    this.isDownloadPending = ko.observable(false);
 	    this.mangas = ko.observableArray([]);
-	    this.resumeMangas = ko.observableArray([]);
+
+	    //keep a reference to the manga downloaded actually!!
+	    this.manga;
 
 		var sockjs = new SockJS(sockjs_url);
 		sockjs.onopen = function() {
@@ -39,27 +40,37 @@ var loadMangaApp = (function(){
 		sockjs.onmessage = function(e) {
 			console.log("receive message "+e.data);
 			var d = JSON.parse(e.data);
-			if(d.status == "download finish") {
-				console.log("download finish with success");
-				self.isDownloadPending(false);
-			}else if(d.status == "success"){
-				var m = new manga();
-				m.fromJson(d.manga)
-				m.id = id;
-				id++;
-				self.mangas.push(m);
-				self.mangas.valueHasMutated();
-			} else if(d.status == "finished"){
-				console.log("manga "+d.manga.chapter+" finished");
-				var m = new resumeManga(d.manga.chapter);
-				self.resumeMangas.push(m)
-				self.resumeMangas.valueHasMutated();
-			} else if(d.status == "pending"){
-				console.log("manga "+d.manga.chapter+"/"+d.manga.page+" pending");
-			} else if(d.status == "error"){
-				console.log("download finished with error !!!!");
-			} else {
-				console.log("status received unknown : "+d.status);
+			switch(d.status) {
+				case "download finish":
+					self.manga.isPending(false);
+					self.isDownloadPending(false);
+					break;
+				case "newManga":
+					self.manga = new manga();
+					self.manga.id = id;
+					id++;
+					self.manga.fromJson(d.manga);
+					self.manga.isPending(true);
+					self.mangas.push(self.manga);
+					self.mangas.valueHasMutated();
+					break;
+				case "success":
+					console.log("success");	
+					break;
+				case "finished":
+					self.manga.isPending(false);
+					console.log("manga "+d.manga.chapter+" finished");
+					break;
+				case "pending":
+					console.log("manga "+d.manga.chapter+"/"+d.manga.page+" pending");
+					break;
+				case "error":
+					console.log("download finished with error !!!!");
+					break;
+				default:
+					console.log("status received unknown : "+d.status);
+					break;
+
 			}
 		};
 		sockjs.onclose = function() {
@@ -80,8 +91,6 @@ var loadMangaApp = (function(){
 	    this.clearMangas = function() {
 	    	self.mangas([]);
 	    	self.mangas.valueHasMutated();
-	    	self.resumeMangas([]);
-	    	self.resumeMangas.valueHasMutated();
 	    }
 
 	    this.launchUpload = function() {
