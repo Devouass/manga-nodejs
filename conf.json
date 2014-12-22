@@ -1,0 +1,22 @@
+{
+	"manga": [
+		 {
+			"name" : "One Piece",
+			"id":"one-piece",
+			"site":"www.lelscan.biz",
+			"lastDownloadChapter":"771"
+		}, 
+		{
+			"name":"Hunter X Hunter",
+			"id":"hunter-x-hunter",
+			"site":"www.lelscan.biz",
+			"lastDownloadChapter":"349"
+		}, 
+		{
+			"name":"Fairy Tail",
+			"id": "fairytail",
+			"site":"www.lecture-en-ligne.com",
+			"lastDownloadChapter":"412"
+		}
+	]
+}

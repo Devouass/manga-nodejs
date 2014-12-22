@@ -10,6 +10,20 @@ var server;
 var PORT = 8090;
 
 
+//config stuff
+var config = (function(){
+    var conf = {};
+    var CONF_DIR = "conf.json"
+    if(!fs.existsSync(CONF_DIR)){
+        console.log("error : no config found !");
+    } else {
+        var data = fs.readFileSync(CONF_DIR);
+        conf = JSON.parse(data);
+    }
+    return conf;
+})();
+
+
 //sockjs stuff
 var sockServeur = sockjs.createServer();
 var sockClients = {};
@@ -41,6 +55,10 @@ function _get(request, response){
         });
     } else if(path.indexOf('/vendor') == 0 || path.indexOf('/hmi') == 0){
         filesLoader.getFile(path, response);
+    } else if(path.indexOf('/config') == 0) {
+        response.writeHead(200, {'Content-Type': 'application/json'});
+        response.write(JSON.stringify(config));
+        response.end();
     } else {
         response.writeHead(404);
         response.end('Not Found');
@@ -91,7 +109,7 @@ function _post(request, response){
             if(!isInt(init) || (!isInt(end) && end != "theLast")){
                 sendError(response, "invalid parameters");
             } else {
-                fileWriter.getManga(init, end, broadcast);
+                fileWriter.getManga(values, broadcast);
                 //response.writeHead(200, {"Content-Type": "application/json"});
                 //response.end(/*JSON.stringify({result:'success'})*/);
                 response.writeHead(200);

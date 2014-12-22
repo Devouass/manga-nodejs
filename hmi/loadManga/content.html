@@ -1,6 +1,11 @@
 <div id='appContent'>
 	
 	<div id="manga-configuration">
+		<div>Select manga</div>
+		<select data-bind="options: mangasChoice,
+                       optionsText: 'name',
+                       value: mangaChoosen"></select>
+
 		<div>from chapter</div>
 		<input type="text" data-bind="value: fromTome"></input>
 

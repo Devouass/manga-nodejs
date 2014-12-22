@@ -3,6 +3,26 @@ var loadMangaApp = (function(){
 	var _query = myApp.query;
 	var sockjs_url = '/manga_sockjs';
 
+	var conf = {};
+
+	function mangaForChoice(name) {
+		var _self = this;
+		_self.name = name
+		_self.id = "";
+		_self.site = "";
+		_self.lastChapterDownload=""
+		_self.fromJson = function(json){
+			_self.id = json.id;
+			_self.site = json.site;
+			_self.lastChapterDownload=json.lastDownloadChapter;
+		}
+		_self.toJson = function() {
+			var j = {};
+			j.id = _self.id;
+			j.site = _self.site;
+			return j;
+		}
+	}
 
 	var id = 0;
 	function manga() {
@@ -22,8 +42,21 @@ var loadMangaApp = (function(){
 	function ViewModel() {
 		var self = this;
 
-		this.fromTome = ko.observable("767");
-	    this.toTome = ko.observable("768");
+		this.fromTome = ko.observable("");
+	    this.toTome = ko.observable("");
+		//for the select
+		this.mangasChoice = ko.observableArray([]);
+		this.mangaChoosen = ko.observable();
+		this.mangaChoosen.subscribe(function(mgChoosen){
+			self.fromTome(mgChoosen.lastChapterDownload);
+			self.toTome("");
+		})
+		$.each(conf.manga, function(id, description) {
+			var m = new mangaForChoice(description.name);
+			m.fromJson(description);
+			self.mangasChoice.push(m);
+		});
+		
 	    this.toTomeEnable = ko.observable(true);
 	    this.theLatest = ko.observable(false);
 	    this.launchUploadEnable = ko.observable(true);
@@ -42,7 +75,11 @@ var loadMangaApp = (function(){
 			var d = JSON.parse(e.data);
 			switch(d.status) {
 				case "download finish":
-					self.manga.isPending(false);
+					if(self.manga){
+						self.manga.isPending(false);
+					} else {
+						window.alert("No manga found")
+					}
 					self.isDownloadPending(false);
 					break;
 				case "newManga":
@@ -58,7 +95,9 @@ var loadMangaApp = (function(){
 					console.log("success");	
 					break;
 				case "finished":
-					self.manga.isPending(false);
+					if(self.manga){
+						self.manga.isPending(false);
+					}
 					console.log("manga "+d.manga.chapter+" finished");
 					break;
 				case "pending":
@@ -82,8 +121,8 @@ var loadMangaApp = (function(){
 		});
 
 	    this.launchUploadEnableComputed = ko.computed(function(){
-	    	return self.fromTome() != "" && (self.toTome() != "" || self.theLatest()) && !self.isDownloadPending();
-	    })
+	    	return !self.isDownloadPending() && self.fromTome() != "" && (self.theLatest() || self.toTome());
+	    }).extend({throttle:1});
 	    this.launchUploadEnableComputed.subscribe(function(b){
 	    	self.launchUploadEnable(b)
 	    })
@@ -96,6 +135,7 @@ var loadMangaApp = (function(){
 	    this.launchUpload = function() {
 	    	self.clearMangas();
 	    	var data = {};
+	    	data.manga = self.mangaChoosen().toJson();
 	    	data.first= self.fromTome();
 	    	if(self.theLatest()){
 	    		data.last = "theLast";
@@ -121,14 +161,26 @@ var loadMangaApp = (function(){
 
 	var _loadContent = function(callback) {
 
+		var htmlLoaded = ko.observable(false);
+		var cssLoaded = ko.observable(false);
+		var configLoaded = ko.observable(false);
+
+		var callCallback = ko.computed(function(){
+			return htmlLoaded() && cssLoaded() && configLoaded();
+		})
+
+		callCallback.subscribe(function(b){
+			if(b && callback){
+				callback();
+			}
+		})
+
 		$.ajax({
 			url: '/hmi/loadManga/content.html',
 			cache: true
 		}).done(function(data, status){
 			_content = data;
-			if(callback){
-				callback();
-			}
+			htmlLoaded(true);
 		}).fail(function(data, status) {
 			console.log(status)
 			console.log("fail")
@@ -142,13 +194,24 @@ var loadMangaApp = (function(){
     	}).done(function(data, status){
     		if(status == 'success'){
     			$('<link rel="stylesheet" type="text/css" href="'+cssRef+'" />').appendTo("head");
+    			cssLoaded(true);
     		}
         }).always(function(data, status){});
+
+        _query.get('/config', function(result, status){
+			if(status == "success"){
+				conf = result;
+				console.log(conf);
+    			configLoaded(true);
+    		} else {
+    			console.log("error when getting config");
+    		}
+        });
 	}
 
 	var init = function() {
-		viewModel = new ViewModel();
 		_loadContent(function(){
+			viewModel = new ViewModel();
 			isReady(true);
 		});
 	}

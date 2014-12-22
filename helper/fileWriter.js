@@ -3,34 +3,21 @@ var fs = require('fs'),
 var events = require('events');
 var eventEmitter = new events.EventEmitter();
 
-var hostManga = 'www.lelscan.biz',
-	pathInit = '/mangas/one-piece/',
-	JPG = '.jpg';
-
-//http://lelscan.biz/mangas/one-piece/769/00.jpg
-var getURL = function(tom, number) {
-	var n = parseInt(number);
-	if(n < 10){
-		n = '0' +n;
-	}
-	return pathInit + tom + '/' + n + JPG;
-}
-
-var fakeDownload = true;
+var fakeDownload = false;
 
 var download = function(options, fileName, context) {
-
+	var firstPage = context.firstPage;
 	var sockMessage = {
 		status : "",
 		manga : {
-			name : context.name || "One Piece",
+			name : context.manga,
 			page: context.page,
 			chapter: context.chapter
 		}
 	}
 
 	if(fakeDownload){
-		if(context.page == "00"){
+		if(context.page == firstPage){
 			sockMessage.status = "newManga";
 			eventEmitter.emit("message", sockMessage)
 		}
@@ -41,7 +28,7 @@ var download = function(options, fileName, context) {
  			var nextChapter = parseInt(context.chapter);
  			nextChapter++;
  			context.chapter =  nextChapter + "";
- 			context.page = "00";
+ 			context.page = firstPage;
  			sockMessage.status = "finished"
  			eventEmitter.emit("message", sockMessage)
  			eventEmitter.emit("continue", context);
@@ -57,47 +44,74 @@ var download = function(options, fileName, context) {
  		return;
 	}
 
-
-	if(!options || !fileName || !fileName instanceof String){
-		console.log('wrong parameters');
-		context.downloadFinishCallback("error")
-	}
-
 	var file = fs.createWriteStream(fileName);
 	console.log('download '+options.path);
-	
+
 	var req = http.get(options, function (res) {
 		
 		if(res.statusCode === 404){
-
-			if(context.page == "00"){
+			fs.unlinkSync(fileName);
+			if(context.page == firstPage){
 				console.log("download finish, no more chapter to download");
 	 			context.downloadFinishCallback("success");
-			} else if(context.end != "theLast" && context.end == context.chapter){
+			} else if(context.end != "theLast" && context.end == context.chapter && context.doublePage){
 	 			console.log("download finish, chapter "+context.end+" downloaded");
 	 			context.downloadFinishCallback("success");
 	 		} else {
 	 			console.log("file not found");
-				fs.unlinkSync(fileName);
-				console.log("next chapter");
-	 			var nextChapter = parseInt(context.chapter);
-	 			nextChapter++;
-	 			context.chapter =  nextChapter + "";
-	 			context.page = "0";
-	 			sockMessage.status = "finished"
-	 			eventEmitter.emit("message", sockMessage)
-	 			eventEmitter.emit("continue", context);
+	 			if(context.doublePage){
+	 				context.doublePage="";
+	 				var nextChapter = parseInt(context.chapter);
+		 			nextChapter++;
+		 			context.chapter =  nextChapter + "";
+		 			context.page = firstPage;
+		 			sockMessage.status = "finished"
+		 			eventEmitter.emit("message", sockMessage)
+		 			eventEmitter.emit("continue", context);
+	 			} else {
+	 				var nextPage = parseInt(context.page);
+ 					nextPage++;
+ 					nextPage = nextPage < 10 ? '0' + nextPage : nextPage + "";
+ 					context.doublePage = context.page+'-'+ nextPage;
+	 				context.page = nextPage;
+	 				eventEmitter.emit("continue", context);
+	 			}
 	 		}
 		} else {
-			res.pipe(file);
-			file.on('finish', function () {
-	            file.close(function(){}); // close() is async, call callback after close completes.
-	        });
-	        file.on('error', function (err) {
-	            fs.unlinkSync(fileName); // Delete the file async. (But we don't check the result)
-	            console.log('error on files' + err);
-				context.downloadFinishCallback("error");
-	        });
+			if (res.statusCode > 300 && res.statusCode < 400 && res.headers.location) {
+				fs.unlinkSync(fileName);
+				if(context.page == firstPage){
+					console.log("download finish, no more chapter to download");
+		 			context.downloadFinishCallback("success");
+				} else if(context.end != "theLast" && context.end == context.chapter){
+		 			console.log("download finish, chapter "+context.end+" downloaded");
+		 			context.downloadFinishCallback("success");
+		 		} else {
+		 			console.log("file not found");
+		 			var nextChapter = parseInt(context.chapter);
+		 			nextChapter++;
+		 			context.chapter =  nextChapter + "";
+		 			context.page = firstPage;
+		 			sockMessage.status = "finished"
+		 			eventEmitter.emit("message", sockMessage)
+		 			eventEmitter.emit("continue", context);
+		 		}
+			} else {
+				if(context.page == firstPage){
+					sockMessage.status = "newManga";
+					eventEmitter.emit("message", sockMessage)
+				}
+
+				res.pipe(file);
+				file.on('finish', function () {
+		            file.close(function(){}); // close() is async, call callback after close completes.
+		        });
+		        file.on('error', function (err) {
+		            fs.unlinkSync(fileName); // Delete the file async. (But we don't check the result)
+		            console.log('error on files' + err);
+					context.downloadFinishCallback("error");
+		        });
+			}			
 		}
 
 		res.on('close', function() {
@@ -109,10 +123,10 @@ var download = function(options, fileName, context) {
 	  	});*/
 	 	res.on('end', function() {
 	 		//never called when 404 received...
-	 		sockMessage.status = "success"
- 			eventEmitter.emit("message", sockMessage)
- 			console.log("next page")
+	 		//sockMessage.status = "success"
+ 			//eventEmitter.emit("message", sockMessage)
  			var nextPage = parseInt(context.page);
+ 			context.doublePage = "";
  			nextPage++;
  			context.page =  nextPage + "";
  			eventEmitter.emit("continue", context);
@@ -135,7 +149,25 @@ var download = function(options, fileName, context) {
 	})
 }
 
-var INITdir = "./downloads/OnePiece/";
+var getURL = function(manga, tom, number, doublePage) {
+	var pathInit = '/mangas/'
+	if(manga === 'fairytail'){
+		pathInit = "/images/mangas/";
+	}
+	pathInit = pathInit + manga;
+	var n;
+	if(doublePage) {
+		n = doublePage;
+	} else {
+		n = parseInt(number);
+		if(n < 10){
+			n = '0' +n;
+		}
+	}
+	return pathInit + '/' + tom + '/' + n + '.jpg';
+}
+
+var INITdir = "";
 var getDirectory = function(chapter){
 	if(fakeDownload){
 		return INITdir + chapter + "/";
@@ -157,24 +189,30 @@ var getDirectory = function(chapter){
 	return path + '/';
 }
 
-var getManga = function(start, end, broadcast) {
-	console.log('try to download One Piece from chapter '+start+' to '+end);
+var getManga = function(mangaInfos, broadcast) {
+	console.log('try to download '+ mangaInfos.manga.id+' from chapter '+mangaInfos.first+' to '+mangaInfos.last);
 
+	//set init dir in function of the manga id...
+	INITdir = "./downloads/" + mangaInfos.manga.id +'/';
 	var options = {
-		host : hostManga,
+		host : mangaInfos.manga.site,
 		port : 80
 	};
 
 	var privateCallback = function(result) {
-
-		//retrieve good number for page
-		var n = parseInt(result.page);
-		if(n < 10){
-			n = '0' +n;
+		var n;
+		if(result.doublePage){
+			n = result.doublePage;
+		} else {
+			//retrieve good number for page
+			n = parseInt(result.page);
+			if(n < 10){
+				n = '0' +n;
+			}
+			result.page = n + "";
 		}
-		result.page = n + "";
-
-		var url = getURL(result.chapter, result.page);
+		
+		var url = getURL(result.manga, result.chapter, result.page, result.doublePage);
 		result.options.path = url + "";
 		var dirPath = getDirectory(result.chapter);
 		var imagePath = dirPath + result.page + '.jpg';
@@ -208,12 +246,17 @@ var getManga = function(start, end, broadcast) {
 		console.log("all listeners removed");
 	}
 
+	var firstPage = mangaInfos.manga.id === "fairytail" ? "01" : "00";
+
 	//then launch for the first time
 	var param = {
-		chapter : start,
-		page: "0",
+		manga: mangaInfos.manga.id,
+		chapter : mangaInfos.first,
+		firstPage: firstPage,
+		doublePage: "",
+		page: firstPage,
 		options: options,
-		end: end,
+		end: mangaInfos.last,
 		downloadFinishCallback: endCallback
 	};
 	privateCallback(param);
