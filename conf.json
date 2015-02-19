@@ -4,7 +4,7 @@
 			"name" : "One Piece",
 			"id":"one-piece",
 			"site":"www.lelscan.biz",
-			"lastDownloadChapter":"771"
+			"lastDownloadChapter":"776"
 		}, 
 		{
 			"name":"Hunter X Hunter",
@@ -16,7 +16,19 @@
 			"name":"Fairy Tail",
 			"id": "fairytail",
 			"site":"www.lecture-en-ligne.com",
-			"lastDownloadChapter":"412"
+			"lastDownloadChapter":"420"
+		},
+		{
+			"name":"Naruto",
+			"id": "naruto",
+			"site":"www.shonenscan.me",
+			"lastDownloadChapter":"686"
+		},
+		{
+			"name":"hero academy",
+			"id": "My%20Hero%20Academia",
+			"site":"cdn.japscan.com",
+			"lastDownloadChapter":"31"
 		}
 	]
 }

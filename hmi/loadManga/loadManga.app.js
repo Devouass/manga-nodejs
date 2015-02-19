@@ -49,7 +49,7 @@ var loadMangaApp = (function(){
 		this.mangaChoosen = ko.observable();
 		this.mangaChoosen.subscribe(function(mgChoosen){
 			self.fromTome(mgChoosen.lastChapterDownload);
-			self.toTome("");
+			self.toTome(mgChoosen.lastChapterDownload);
 		})
 		$.each(conf.manga, function(id, description) {
 			var m = new mangaForChoice(description.name);

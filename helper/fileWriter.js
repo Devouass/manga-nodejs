@@ -152,15 +152,22 @@ var download = function(options, fileName, context) {
 var getURL = function(manga, tom, number, doublePage) {
 	var pathInit = '/mangas/'
 	if(manga === 'fairytail'){
-		pathInit = "/images/mangas/";
+		pathInit = "/images/tests/";
+	} else if(manga == 'My%20Hero%20Academia' || manga == "My Hero Academia") {
+		pathInit = "/lecture-en-ligne/";
 	}
+
 	pathInit = pathInit + manga;
 	var n;
 	if(doublePage) {
 		n = doublePage;
 	} else {
 		n = parseInt(number);
-		if(n < 10){
+
+		var toto = true;
+		//toto = false;
+
+		if(toto && n < 10){
 			n = '0' +n;
 		}
 	}
@@ -179,7 +186,7 @@ var getDirectory = function(chapter){
 		}
 		console.log("repertory downloads created");
 		fs.mkdirSync(INITdir, 0755);
-		console.log("repertory OnePiece created");
+		console.log("repertory created");
 	}
 	var path = INITdir + chapter;
 	if(!fs.existsSync(path)){
@@ -246,7 +253,10 @@ var getManga = function(mangaInfos, broadcast) {
 		console.log("all listeners removed");
 	}
 
-	var firstPage = mangaInfos.manga.id === "fairytail" ? "01" : "00";
+	var firstPage = (mangaInfos.manga.id === "fairytail" || mangaInfos.manga.id === "My%20Hero%20Academia") ? "01" : "00";
+	//var firstPage = mangaInfos.manga.id === "My%20Hero%20Academia" ? "01" : "00";
+	//firstPage = mangaInfos.manga.id === "naruto" ? "3" : firstPage;
+	//firstPage = "02";
 
 	//then launch for the first time
 	var param = {
