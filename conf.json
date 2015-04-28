@@ -4,14 +4,20 @@
 			"name" : "One Piece",
 			"id":"one-piece",
 			"site":"www.lelscan.biz",
-			"lastDownloadChapter":"776"
+			"lastDownloadChapter":"782"
 		}, 
 		{
 			"name":"Hunter X Hunter",
 			"id":"hunter-x-hunter",
 			"site":"www.lelscan.biz",
 			"lastDownloadChapter":"349"
-		}, 
+		},
+		{
+			"name":"Fairy Tail OVH",
+			"id": "fairytail_ovh",
+			"site":"www.mangaspaceserver.ovh",
+			"lastDownloadChapter":"417"
+		},
 		{
 			"name":"Fairy Tail",
 			"id": "fairytail",

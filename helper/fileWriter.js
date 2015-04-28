@@ -155,9 +155,14 @@ var getURL = function(manga, tom, number, doublePage) {
 		pathInit = "/images/tests/";
 	} else if(manga == 'My%20Hero%20Academia' || manga == "My Hero Academia") {
 		pathInit = "/lecture-en-ligne/";
+	} else if(manga == "fairytail_ovh") {
+		pathInit ="/data/manga/Fairy/";
 	}
 
-	pathInit = pathInit + manga;
+	if(manga != "fairytail_ovh") {
+		pathInit = pathInit + manga;
+	}
+	
 	var n;
 	if(doublePage) {
 		n = doublePage;
